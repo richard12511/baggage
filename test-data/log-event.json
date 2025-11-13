@@ -1,0 +1,15 @@
+{
+  "type": "logging.event",
+  "priority": "NORMAL",
+  "metadata": {
+    "eventId": "550e8400-e29b-41d4-a716-446655440000",
+    "timestamp": "2025-11-13T15:30:00.000Z",
+    "source": "test-app",
+    "version": "1.0"
+  },
+  "payload": {
+    "level": "ERROR",
+    "message": "Test error message",
+    "errorCode": "TEST_ERROR"
+  }
+}

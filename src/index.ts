@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import cors from "cors";
+import eventRoutes from "./routes/events";
 
 dotenv.config();
 const app = express();
@@ -19,6 +20,8 @@ app.get("/health", (req: Request, res: Response) => {
     service: "baggage",
   });
 });
+
+app.use("/v1", eventRoutes);
 
 app.listen(PORT, () => {
   console.log(`BAGgage event queue running on port ${PORT}`);
