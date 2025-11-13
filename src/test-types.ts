@@ -4,11 +4,15 @@ import {
   Priority,
   LogLevel,
   LicenseType,
-} from "./types/events";
+  EventTypeSchema,
+  PrioritySchema,
+  LogLevelSchema,
+  LicenseTypeSchema,
+} from "./schemas/events";
 
 const logEvent: Event = {
-  type: EventType.LOG,
-  priority: Priority.NORMAL,
+  type: "logging.event",
+  priority: "HIGH",
   metadata: {
     eventId: "550e8400-e29b-41d4-a716-446655440000",
     timestamp: new Date().toISOString(),
@@ -17,9 +21,9 @@ const logEvent: Event = {
     version: "1.0",
   },
   payload: {
-    level: LogLevel.ERROR,
+    level: "ERROR",
     message: "Failed to connect to database",
-    stackTrace: "Error: ECONNREFUSED\n at Database.connect()",
+    stackTrace: "Error: ECONNREFUSED\n  at Database.connect(...)",
     errorCode: "DATABASE_CONNECTION_ERROR",
     context: {
       host: "db.example.com",
@@ -28,11 +32,9 @@ const logEvent: Event = {
   },
 };
 
-const expirationDate = new Date();
-expirationDate.setDate(expirationDate.getDate() + 30);
 const licenseEvent: Event = {
-  type: EventType.LICENSE_CREATE,
-  priority: Priority.HIGH,
+  type: "licensing.create",
+  priority: "HIGH",
   metadata: {
     eventId: "660e8400-e29b-41d4-a716-446655440001",
     timestamp: new Date().toISOString(),
@@ -40,32 +42,42 @@ const licenseEvent: Event = {
     version: "1.0",
   },
   payload: {
-    licenseType: LicenseType.CL,
+    licenseType: "SOFTWARE_LICENSE",
     customerId: "CUST-12345",
-    productCodes: ["181", "182"],
-    featureCodes: ["232", "233"],
-    expirationDate: expirationDate.toISOString(),
-    email: "richard.schmidt@htri.net",
-    xmlPayload: "<xml>Test payload</xml>",
+    productCodes: ["premium-features"],
+    featureCodes: ["advanced-analytics", "api-access"],
+    expirationDate: new Date(
+      Date.now() + 365 * 24 * 60 * 60 * 1000
+    ).toISOString(),
+    email: "customer@example.com",
+    xmlPayload: "<license>...</license>",
   },
 };
 
+/**
+ * Function demonstrating discriminated union type narrowing
+ */
 function processEvent(event: Event): void {
   console.log(`Processing ${event.type} event from ${event.metadata.source}`);
 
-  if (event.type === EventType.LOG) {
-    console.log(`   Log level: ${event.payload.level}`);
-    console.log(`   Message: ${event.payload.message}`);
+  if (event.type === "logging.event") {
+    console.log(`  Log level: ${event.payload.level}`);
+    console.log(`  Message: ${event.payload.message}`);
     if (event.payload.errorCode) {
-      console.log(`   Error code: ${event.payload.errorCode}`);
+      console.log(`  Error code: ${event.payload.errorCode}`);
     }
-  } else if (event.type === EventType.LICENSE_CREATE) {
+  } else if (event.type === "licensing.create") {
     console.log(`  Customer: ${event.payload.customerId}`);
     console.log(`  License type: ${event.payload.licenseType}`);
-    console.log(`  Products: ${event.payload.productCodes}`);
+    console.log(`  Products: ${event.payload.productCodes.join(", ")}`);
+    console.log(`  Features: ${event.payload.featureCodes.join(", ")}`);
+  } else if (event.type === "licensing.updateidentities") {
+    console.log(`  Key ID: ${event.payload.keyId}`);
+    console.log(`  Number of identities: ${event.payload.identities.length}`);
   }
 }
 
+// Test the function
 console.log("\n=== Testing Log Event ===");
 processEvent(logEvent);
 
