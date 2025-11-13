@@ -1,50 +1,18 @@
 {
-  // Visit https://aka.ms/tsconfig to read more about this file
   "compilerOptions": {
-    // File Layout
-    // "rootDir": "./src",
-    // "outDir": "./dist",
-
-    // Environment Settings
-    // See also https://aka.ms/tsconfig/module
-    "module": "commonjs",
-    "target": "ES2022",
-    "types": [],
-
-    // For nodejs:
-    "lib": ["ES2022"],
-    "outDir": "./dist",
-    "rootDir": "./src",
-    // "types": ["node"],
-    // and npm install -D @types/node
-
-    // Other Outputs
-    "sourceMap": true, //Generate source maps for debugging
-    "declaration": true, //Generate .d.ts files (for SDK)
-    "declarationMap": true,
-
-    // Stricter Typechecking Options
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-
-    // Style Options
-    // "noImplicitReturns": true,
-    // "noImplicitOverride": true,
-    // "noUnusedLocals": true,
-    // "noUnusedParameters": true,
-    // "noFallthroughCasesInSwitch": true,
-    // "noPropertyAccessFromIndexSignature": true,
-
-    // Recommended Options
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "jsx": "react-jsx",
+    "target": "ES2022", // Use modern JavaScript features
+    "module": "commonjs", // Node.js uses CommonJS modules
+    "lib": ["ES2022"], // Standard library to include
+    "outDir": "./dist", // Compiled JS goes here
+    "rootDir": "./src", // Source TS files are here
+    "strict": true, // Enable all strict type checks (IMPORTANT!)
+    "esModuleInterop": true, // Better compatibility with imports
+    "skipLibCheck": true, // Faster compilation
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
-    "moduleDetection": "force"
-  }
+    "resolveJsonModule": true, // Allow importing JSON files
+    "declaration": true, // Generate .d.ts files (for SDK later)
+    "sourceMap": true // Generate source maps for debugging
+  },
+  "include": ["src/**/*"], // Compile all files in src/
+  "exclude": ["node_modules", "dist"] // Don't compile dependencies or output
 }
