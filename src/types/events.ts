@@ -9,10 +9,10 @@ interface EventMetadata {
   source: string;
   correlationId?: string;
   version: string;
-  payload:
-    | LogEventPayload
-    | LicenseCreateEventPayload
-    | UpdateIdentitiesEventPayload;
+  //   payload:
+  //     | LogEventPayload
+  //     | LicenseCreateEventPayload
+  //     | UpdateIdentitiesEventPayload;
   additionalContext?: Record<string, string>;
 }
 
@@ -84,6 +84,8 @@ interface LicenseCreateEvent extends BaseEvent {
   payload: LicenseCreateEventPayload;
 }
 
+type Event = LogEvent | LicenseCreateEvent;
+
 type PushEventRequest = Event;
 
 interface PushEventResponse {
@@ -120,4 +122,6 @@ export type {
   PushEventResponse,
   ErrorResponse,
   ValidationResult,
+  //   LogLevel,
+  //   LicenseType,
 };
