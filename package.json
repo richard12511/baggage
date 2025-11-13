@@ -8,7 +8,10 @@
     "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["event-queue", "internal-tools"],
+  "keywords": [
+    "event-queue",
+    "internal-tools"
+  ],
   "author": "",
   "license": "ISC",
   "description": "Event queue for application communication",
@@ -24,6 +27,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "helmet": "^8.1.0"
+    "helmet": "^8.1.0",
+    "zod": "^4.1.12"
   }
 }
