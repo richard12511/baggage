@@ -73,6 +73,23 @@ class QueueService {
     console.log(`Event ID: ${event.metadata.eventId}`);
   }
 
+  async disconnect(): Promise<void> {
+    try {
+      if (this.channel) {
+        await this.channel.close();
+        console.log("Channel closed");
+      }
+
+      if (this.connection) {
+        await this.connection.close();
+        console.log("Connection closed");
+      }
+    } catch (error) {
+      console.error("Error closing RabbitMQ connection:", error);
+      throw error;
+    }
+  }
+
   private async setupQueues(): Promise<void> {
     if (!this.channel) {
       throw new Error("Channel not initialized");
