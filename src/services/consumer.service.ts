@@ -49,6 +49,23 @@ class ConsumerService {
     console.log("Consumer service started");
   }
 
+  async disconnect(): Promise<void> {
+    try {
+      if (this.channel) {
+        await this.channel.close();
+        console.log("Consumer channel closed");
+      }
+
+      if (this.connection) {
+        await this.connection.close();
+        console.log("Consumer connection closed");
+      }
+    } catch (error) {
+      console.error("Error closing consumer connection:", error);
+      throw error;
+    }
+  }
+
   private async startConsumingQueue(queueName: string): Promise<void> {
     if (!this.channel) {
       console.log("Channel not initialized yet");
@@ -147,3 +164,5 @@ class ConsumerService {
     });
   }
 }
+
+export const consumerService = new ConsumerService();
