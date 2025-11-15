@@ -1,5 +1,15 @@
 import amqp, { ChannelModel, Channel } from "amqplib";
 import { Event, Priority } from "../schemas/events";
+import retry from "async-retry";
+import {
+  publishRetryConfig,
+  connectionRetryConfig,
+} from "../config/retry.config";
+import {
+  isTransientError,
+  isPermanentError,
+  getErrorMessage,
+} from "../utils/error-classifier";
 
 class QueueService {
   private connection: ChannelModel | null = null;
@@ -8,6 +18,7 @@ class QueueService {
   private readonly highPriorityQueue: string;
   private readonly normalPriorityQueue: string;
   private readonly deadLetterQueue: string;
+  private isConnecting: boolean = false;
 
   constructor() {
     this.url = process.env.RABBITMQ_URL || "amqp://localhost:5672";
@@ -21,28 +32,40 @@ class QueueService {
   }
 
   async connect(): Promise<void> {
-    try {
-      console.log("Connecting to RabbitMQ...");
-      console.log("URL:", this.url);
-      this.connection = await amqp.connect(this.url);
-      console.log("Connected to RabbitMQ");
+    await retry(async (bail) => {
+      try {
+        console.log("Connecting to baggage queue");
+        this.connection = await amqp.connect(this.url);
+        console.log("Connected to RabbitMQ");
+        this.channel = await this.connection.createChannel();
+        await this.setupQueues();
 
-      this.channel = await this.connection.createChannel();
-      console.log("Channel created");
+        this.connection.on("error", (err) => {
+          console.error("RabbitMQ connection error:", err);
+        });
 
-      await this.setupQueues();
-      console.log("Queues configured");
+        this.connection.on("close", () => {
+          console.log("RabbitMQ connetion closed");
+          this.connection = null;
+          this.channel = null;
+        });
+      } catch (error) {
+        if (isPermanentError(error)) {
+          console.error(
+            "Permanent error connecting to RabbitMQ:",
+            getErrorMessage(error)
+          );
+          bail(error as Error);
+          return;
+        }
 
-      this.connection.on("error", (err) => {
-        console.error("RabbitMQ connection error:", err);
-      });
-      this.connection.on("close", () => {
-        console.log("RabbitMQ connection closed");
-      });
-    } catch (error) {
-      console.error("Failed to connect to RabbitMQ:", error);
-      throw error;
-    }
+        console.warn(
+          "Transient error connecting to RabbitMQ, will retry:",
+          getErrorMessage(error)
+        );
+        throw error;
+      }
+    }, connectionRetryConfig);
   }
 
   async publishEvent(event: Event): Promise<void> {
