@@ -1,11 +1,11 @@
+import "./config/env";
+
 import express, { Request, Response } from "express";
-import dotenv from "dotenv";
 import helmet from "helmet";
 import cors from "cors";
 import eventRoutes from "./routes/events";
 import { queueService } from "./services/queue.service";
 
-dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 

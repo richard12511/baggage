@@ -11,6 +11,7 @@ class QueueService {
 
   constructor() {
     this.url = process.env.RABBITMQ_URL || "amqp://localhost:5672";
+    console.log("🔍 RabbitMQ URL being used:", this.url);
     this.highPriorityQueue =
       process.env.RABBITMQ_HIGH_PRIORITY_QUEUE || "events-high-priority";
     this.normalPriorityQueue =
@@ -22,7 +23,7 @@ class QueueService {
   async connect(): Promise<void> {
     try {
       console.log("Connecting to RabbitMQ...");
-
+      console.log("URL:", this.url);
       this.connection = await amqp.connect(this.url);
       console.log("Connected to RabbitMQ");
 
