@@ -69,32 +69,61 @@ class QueueService {
   }
 
   async publishEvent(event: Event): Promise<void> {
-    if (!this.channel) {
-      throw new Error("Channel not initialized. Call connect() first.");
-    }
+    await retry(async (bail) => {
+      try {
+        await this.ensureConnection();
 
-    const queueName =
-      event.priority === "HIGH"
-        ? this.highPriorityQueue
-        : this.normalPriorityQueue;
+        if (!this.channel) {
+          throw new Error("Channel not available after reconnection attempt");
+        }
 
-    //Convert event to buffer
-    const msgBuffer = Buffer.from(JSON.stringify(event));
+        const queueName =
+          event.priority === "HIGH"
+            ? this.highPriorityQueue
+            : this.normalPriorityQueue;
 
-    //Publish to queue
-    const sent = this.channel.sendToQueue(queueName, msgBuffer, {
-      persistent: true,
-      contentType: "application/json",
-      timestamp: Date.now(),
-      messageId: event.metadata.eventId,
-    });
+        const messageBuffer = Buffer.from(JSON.stringify(event));
 
-    if (!sent) {
-      throw new Error("Failed to send message to queue");
-    }
+        const sent = this.channel.sendToQueue(queueName, messageBuffer, {
+          persistent: true,
+          contentType: "application/json",
+          timestamp: Date.now(),
+          messageId: event.metadata.eventId,
+        });
 
-    console.log(`Published ${event.type} event to ${queueName}`);
-    console.log(`Event ID: ${event.metadata.eventId}`);
+        if (!sent) {
+          throw new Error("Failed to send message to queue");
+        }
+
+        console.log(`Published ${event.type} event to ${queueName}`);
+        console.log(`Event ID: ${event.metadata.eventId}`);
+      } catch (error) {
+        if (isPermanentError(error)) {
+          console.error(
+            "Permanent error publishing event:",
+            getErrorMessage(error)
+          );
+          bail(error as Error);
+          return;
+        }
+
+        if (isTransientError(error)) {
+          console.warn(
+            "Transient error publishing event, will retry:",
+            getErrorMessage(error)
+          );
+          this.connection = null;
+          this.channel = null;
+          throw error;
+        }
+
+        console.warn(
+          "Unknown error publishing event, will retry",
+          getErrorMessage(error)
+        );
+        throw error;
+      }
+    }, publishRetryConfig);
   }
 
   async disconnect(): Promise<void> {
@@ -141,6 +170,28 @@ class QueueService {
     });
 
     console.log("Finished setting up queues");
+  }
+
+  private async ensureConnection(): Promise<void> {
+    if (this.connection && this.channel) {
+      return;
+    }
+
+    //Prevents concurrent reconnection attempts
+    if (this.isConnecting) {
+      while (this.isConnecting) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      return;
+    }
+
+    this.isConnecting = true;
+    try {
+      await this.connect();
+    } finally {
+      this.isConnecting = false;
+    }
   }
 }
 
