@@ -44,6 +44,35 @@ class QueueService {
     }
   }
 
+  async publishEvent(event: Event): Promise<void> {
+    if (!this.channel) {
+      throw new Error("Channel not initialized. Call connect() first.");
+    }
+
+    const queueName =
+      event.priority === "HIGH"
+        ? this.highPriorityQueue
+        : this.normalPriorityQueue;
+
+    //Convert event to buffer
+    const msgBuffer = Buffer.from(JSON.stringify(event));
+
+    //Publish to queue
+    const sent = this.channel.sendToQueue(queueName, msgBuffer, {
+      persistent: true,
+      contentType: "application/json",
+      timestamp: Date.now(),
+      messageId: event.metadata.eventId,
+    });
+
+    if (!sent) {
+      throw new Error("Failed to send message to queue");
+    }
+
+    console.log(`Published ${event.type} event to ${queueName}`);
+    console.log(`Event ID: ${event.metadata.eventId}`);
+  }
+
   private async setupQueues(): Promise<void> {
     if (!this.channel) {
       throw new Error("Channel not initialized");
