@@ -5,6 +5,7 @@ import helmet from "helmet";
 import cors from "cors";
 import eventRoutes from "./routes/events";
 import { queueService } from "./services/queue.service";
+import { consumerService } from "./services/consumer.service";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,6 +28,8 @@ app.use("/v1", eventRoutes);
 async function startServer() {
   try {
     await queueService.connect();
+    await consumerService.connect();
+    await consumerService.startConsuming();
     app.listen(PORT, () => {
       console.log(`BAGgage event queue running on port ${PORT}`);
       console.log(`Health check: http://localhost:${PORT}/health`);
@@ -42,12 +45,14 @@ async function startServer() {
 process.on("SIGTERM", async () => {
   console.log("SIGTERM received, disconnecting from queue and shutting down");
   await queueService.disconnect();
+  await consumerService.disconnect();
   process.exit(0);
 });
 
 process.on("SIGINT", async () => {
   console.log("SIGINT received, disconnecting from queue and shutting down");
   await queueService.disconnect();
+  await consumerService.disconnect();
   process.exit(0);
 });
 
