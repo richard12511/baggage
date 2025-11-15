@@ -118,7 +118,11 @@ class ConsumerService {
       await this.processLicenseCreateEvent(event);
     } else if (event.type === "licensing.updateidentities") {
       await this.processUpdateIdentitiesEvent(event);
+    } else {
+      console.warn(`Unknown event type: ${(event as any).type}`);
     }
+
+    console.log(`Successfully processed event ${event.metadata.eventId}`);
   }
 
   private async processLogEvent(
