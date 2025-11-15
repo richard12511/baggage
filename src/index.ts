@@ -42,18 +42,31 @@ async function startServer() {
   }
 }
 
-process.on("SIGTERM", async () => {
-  console.log("SIGTERM received, disconnecting from queue and shutting down");
-  await queueService.disconnect();
-  await consumerService.disconnect();
-  process.exit(0);
-});
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
 
-process.on("SIGINT", async () => {
-  console.log("SIGINT received, disconnecting from queue and shutting down");
-  await queueService.disconnect();
-  await consumerService.disconnect();
-  process.exit(0);
-});
+async function gracefulShutdown(signal: string): Promise<void> {
+  console.log(`${signal} received, shutting down gracefully`);
 
+  const shutdownTimeout = setTimeout(() => {
+    console.error("Shutdown timeout - forcing exit");
+    process.exit(1);
+  }, 10000);
+
+  try {
+    await consumerService.disconnect();
+  } catch (error) {
+    console.error("Non-fatal error during consumer shutdown:", error);
+  }
+
+  try {
+    await queueService.disconnect();
+  } catch (error) {
+    console.error("Non-fatal error during queue shutdown:", error);
+  }
+
+  clearTimeout(shutdownTimeout);
+  console.log("Graceful shutdown complete");
+  process.exit(0);
+}
 startServer();
