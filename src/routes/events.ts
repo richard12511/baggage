@@ -1,6 +1,7 @@
 import e, { Router, Request, Response } from "express";
 import { validateEvent } from "../utils/validators";
 import { Event, PushEventResponse, ErrorResponse } from "../schemas/events";
+import { queueService } from "../services/queue.service";
 
 const router = Router();
 
@@ -31,13 +32,7 @@ router.post("/events", async (req: Request, res: Response) => {
     }
 
     const event = req.body as Event;
-
-    //TODO QUEUE THE EVENT HERE
-    console.log(
-      `   Received ${event.type} event from ${event.metadata.source}`
-    );
-    console.log(`   Event ID: ${event.metadata.eventId}`);
-    console.log(`   Priority: ${event.priority}`);
+    await queueService.publishEvent(event);
 
     const successResponse: PushEventResponse = {
       success: true,

@@ -119,3 +119,6 @@ class QueueService {
     console.log("Finished setting up queues");
   }
 }
+
+//Singleton
+export const queueService = new QueueService();
