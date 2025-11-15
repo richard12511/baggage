@@ -2,6 +2,7 @@ import e, { Router, Request, Response } from "express";
 import { validateEvent } from "../utils/validators";
 import { Event, PushEventResponse, ErrorResponse } from "../schemas/events";
 import { queueService } from "../services/queue.service";
+import { error } from "console";
 
 const router = Router();
 
@@ -32,7 +33,25 @@ router.post("/events", async (req: Request, res: Response) => {
     }
 
     const event = req.body as Event;
-    await queueService.publishEvent(event);
+
+    try {
+      await queueService.publishEvent(event);
+    } catch (publishError) {
+      console.error("Failed to publish event after retries:", publishError);
+      const errorResponse: ErrorResponse = {
+        success: false,
+        error: {
+          code: "QUEUE_UNAVAILABLE",
+          message: "Unable to queue event. Please try again later.",
+          details:
+            publishError instanceof Error
+              ? publishError.message
+              : "Unknown error",
+        },
+      };
+
+      return res.status(503).json(errorResponse);
+    }
 
     const successResponse: PushEventResponse = {
       success: true,

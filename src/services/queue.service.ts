@@ -130,14 +130,24 @@ class QueueService {
     try {
       if (this.channel) {
         await this.channel.close();
+        this.channel = null;
         console.log("Channel closed");
       }
 
       if (this.connection) {
         await this.connection.close();
+        this.connection = null;
         console.log("Connection closed");
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (
+        error.message?.includes("Channel closed") ||
+        error.message?.includes("Connection closed")
+      ) {
+        console.log("Connection already closed");
+        return;
+      }
+
       console.error("Error closing RabbitMQ connection:", error);
       throw error;
     }
