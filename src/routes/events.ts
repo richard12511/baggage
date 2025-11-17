@@ -3,6 +3,7 @@ import { validateEvent } from "../utils/validators";
 import { Event, PushEventResponse, ErrorResponse } from "../schemas/events";
 import { queueService } from "../services/queue.service";
 import { error } from "console";
+import { metricsService } from "../services/metrics.service";
 
 const router = Router();
 
@@ -20,6 +21,8 @@ router.post("/events", async (req: Request, res: Response) => {
   try {
     const validationResult = validateEvent(req.body);
     if (!validationResult.valid) {
+      const eventType = req.body.type || "unknown";
+      metricsService.validationErrorsTotal.inc({ event_type: eventType });
       const errorResponse: ErrorResponse = {
         success: false,
         error: {
@@ -33,10 +36,26 @@ router.post("/events", async (req: Request, res: Response) => {
     }
 
     const event = req.body as Event;
+    const publishTimer = metricsService.queuePublishDuration.startTimer();
 
     try {
       await queueService.publishEvent(event);
+
+      metricsService.queuePublishTotal.inc({
+        status: "success",
+        event_type: event.type,
+        priority: event.priority,
+      });
+
+      publishTimer({ event_type: event.type, priority: event.priority });
     } catch (publishError) {
+      metricsService.queuePublishTotal.inc({
+        status: "failure",
+        event_type: event.type,
+        priority: event.priority,
+      });
+      publishTimer({ event_type: event.type, priority: event.priority });
+
       console.error("Failed to publish event after retries:", publishError);
       const errorResponse: ErrorResponse = {
         success: false,
@@ -62,6 +81,7 @@ router.post("/events", async (req: Request, res: Response) => {
     return res.status(202).json(successResponse);
   } catch (error) {
     console.error("Error processing event: ", error);
+
     const errorResponse: ErrorResponse = {
       success: false,
       error: {
@@ -70,6 +90,8 @@ router.post("/events", async (req: Request, res: Response) => {
         details: error instanceof Error ? error.message : "Unknown error",
       },
     };
+
+    return res.status(500).json(errorResponse);
   }
 });
 
