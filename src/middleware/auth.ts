@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import crypto from "crypto";
 import { success } from "zod";
+import { metricsService } from "../services/metrics.service";
 
 interface AuthenticatedRequest extends Request {
   apiKey?: string;
@@ -40,6 +41,7 @@ export function requireApiKey(
 ): void {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
+    metricsService.authAttemptsTotal.inc({ status: "missing_key" });
     res.status(401).json({
       success: false,
       error: {
@@ -53,6 +55,8 @@ export function requireApiKey(
 
   const parts = authHeader.split(" ");
   if (parts.length !== 2 || parts[0] !== "Bearer") {
+    metricsService.authAttemptsTotal.inc({ status: "invalid_format" });
+
     res.status(401).json({
       success: false,
       error: {
@@ -70,12 +74,12 @@ export function requireApiKey(
   for (const validKey of validApiKeys) {
     if (secureCompare(authKey, validKey)) {
       isValid = true;
-      console.log("We found a valid key");
       break;
     }
   }
 
   if (!isValid) {
+    metricsService.authAttemptsTotal.inc({ status: "invalid_key" });
     console.warn(`Invalid API key attempt from ${req.ip}`);
     res.status(401).json({
       success: false,
@@ -88,6 +92,21 @@ export function requireApiKey(
     return;
   }
 
+  metricsService.authAttemptsTotal.inc({ status: "success" });
   req.apiKey = authKey;
   next();
+}
+
+export function optionalApiKey(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void {
+  const authHeader = req.headers.authorization;
+
+  if (authHeader) {
+    requireApiKey(req, res, next);
+  } else {
+    next();
+  }
 }

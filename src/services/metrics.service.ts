@@ -16,6 +16,8 @@ class MetricsService {
   public rabbitmqConnectionStatus: client.Gauge<string>;
   public rabbitmqReconnectionsTotal: client.Counter<string>;
 
+  public authAttemptsTotal: client.Counter<string>;
+
   constructor() {
     this.register = new client.Registry();
     client.collectDefaultMetrics({ register: this.register });
@@ -74,6 +76,14 @@ class MetricsService {
     this.rabbitmqReconnectionsTotal = new client.Counter({
       name: "rabbitmq_reconnections_total",
       help: "Total number of RabbitMQ reconnection attempts",
+      registers: [this.register],
+    });
+
+    //Auth metrics
+    this.authAttemptsTotal = new client.Counter({
+      name: "auth_attempts_total",
+      help: "Total number of authorization attempts",
+      labelNames: ["event_type", "status"],
       registers: [this.register],
     });
   }
