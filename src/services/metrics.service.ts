@@ -9,12 +9,12 @@ class MetricsService {
 
   public validationErrorsTotal: client.Counter<string>;
 
-  //   public queuePublishTotal: client.Counter<string>;
-  //   public queuePublishDuration: client.Histogram<string>;
-  //   public queuePublishRetriesTotal: client.Counter<string>;
+  public queuePublishTotal: client.Counter<string>;
+  public queuePublishDuration: client.Histogram<string>;
+  public queuePublishRetriesTotal: client.Counter<string>;
 
-  //   public rabbitmqConnectionStatus: client.Gauge<string>;
-  //   public rabbitmqReconnectionsTotal: client.Counter<string>;
+  public rabbitmqConnectionStatus: client.Gauge<string>;
+  public rabbitmqReconnectionsTotal: client.Counter<string>;
 
   constructor() {
     this.register = new client.Registry();
@@ -39,6 +39,41 @@ class MetricsService {
       name: "validation_errors_total",
       help: "Total number of validation errors",
       labelNames: ["event_type"],
+      registers: [this.register],
+    });
+
+    this.queuePublishTotal = new client.Counter({
+      name: "queue_publish_total",
+      help: "Total number of queue publish attempts",
+      labelNames: ["status", "event_type", "priority"],
+      registers: [this.register],
+    });
+
+    this.queuePublishDuration = new client.Histogram({
+      name: "queue_publish_duration_seconds",
+      help: "Duration of queue publish operations in seconds",
+      labelNames: ["event_type", "priority"],
+      buckets: [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1],
+      registers: [this.register],
+    });
+
+    this.queuePublishRetriesTotal = new client.Counter({
+      name: "queue_publish_retries_total",
+      help: "Total number of queue publish retry attempts",
+      labelNames: ["event_type"],
+      registers: [this.register],
+    });
+
+    // Connection Metrics
+    this.rabbitmqConnectionStatus = new client.Gauge({
+      name: "rabbitmq_connection_status",
+      help: "RabbitMQ connection status (1 = connected, 0 = disconnected)",
+      registers: [this.register],
+    });
+
+    this.rabbitmqReconnectionsTotal = new client.Counter({
+      name: "rabbitmq_reconnections_total",
+      help: "Total number of RabbitMQ reconnection attempts",
       registers: [this.register],
     });
   }
