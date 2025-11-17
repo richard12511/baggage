@@ -7,6 +7,7 @@ import eventRoutes from "./routes/events";
 import { queueService } from "./services/queue.service";
 import { consumerService } from "./services/consumer.service";
 import { metricsService } from "./services/metrics.service";
+import { requestLogger } from "./middleware/logger";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,6 +16,7 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet()); //Security headers
 app.use(cors());
 app.use(express.json()); //Parse JSON request bodies
+app.use(requestLogger);
 
 app.get("/health", (req: Request, res: Response) => {
   res.status(200).json({
