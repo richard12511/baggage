@@ -1,0 +1,180 @@
+### Health Check
+GET http://localhost:3000/health
+
+### Metrics Endpoint
+GET http://localhost:3000/metrics
+
+### Valid Normal Priority Log Event
+POST http://localhost:3000/v1/events
+Content-Type: application/json
+
+{
+  "type": "logging.event",
+  "priority": "NORMAL",
+  "metadata": {
+    "eventId": "550e8400-e29b-41d4-a716-446655440000",
+    "timestamp": "2025-11-15T21:00:00.000Z",
+    "source": "test-app",
+    "version": "1.0"
+  },
+  "payload": {
+    "level": "ERROR",
+    "message": "Test error message",
+    "errorCode": "TEST_ERROR"
+  }
+}
+
+### Valid High Priority Log Event
+POST http://localhost:3000/v1/events
+Content-Type: application/json
+
+{
+  "type": "logging.event",
+  "priority": "HIGH",
+  "metadata": {
+    "eventId": "660e8400-e29b-41d4-a716-446655440001",
+    "timestamp": "2025-11-15T21:00:00.000Z",
+    "source": "critical-system",
+    "version": "1.0"
+  },
+  "payload": {
+    "level": "ERROR",
+    "message": "Critical error in production",
+    "errorCode": "CRITICAL_ERROR",
+    "stackTrace": "Error: Something went wrong\n  at Object.<anonymous> (/app/index.js:42:15)\n  at Module._compile (internal/modules/cjs/loader.js:1085:14)"
+  }
+}
+
+### Valid License Create Event
+POST http://localhost:3000/v1/events
+Content-Type: application/json
+
+{
+  "type": "licensing.create",
+  "priority": "HIGH",
+  "metadata": {
+    "eventId": "770e8400-e29b-41d4-a716-446655440002",
+    "timestamp": "2025-11-15T21:00:00.000Z",
+    "source": "admin-dashboard",
+    "version": "1.0"
+  },
+  "payload": {
+    "licenseType": "SOFTWARE_LICENSE",
+    "customerId": "CUST-12345",
+    "productCodes": ["premium-features", "analytics-pro"],
+    "featureCodes": ["advanced-analytics", "api-access", "custom-reports"],
+    "expirationDate": "2026-12-31T23:59:59.000Z",
+    "email": "customer@example.com",
+    "xmlPayload": "<license><customer>CUST-12345</customer><product>premium</product></license>"
+  }
+}
+
+### Valid Update Identities Event
+POST http://localhost:3000/v1/events
+Content-Type: application/json
+
+{
+  "type": "licensing.updateidentities",
+  "priority": "HIGH",
+  "metadata": {
+    "eventId": "880e8400-e29b-41d4-a716-446655440003",
+    "timestamp": "2025-11-15T21:00:00.000Z",
+    "source": "identity-service",
+    "version": "1.0"
+  },
+  "payload": {
+    "keyId": "KEY-67890",
+    "identities": [
+      {
+        "issuedTo": "john.doe@example.com",
+        "identityString": "IDENT-ABC-123",
+        "allowRemote": true,
+        "allowDetach": false,
+        "allowConcurrency": true,
+        "limitTo": "workstation-001",
+        "maxNumberOfAutoRegisteredMachines": 5,
+        "expirationDate": "2026-06-30T23:59:59.000Z"
+      }
+    ]
+  }
+}
+
+### Invalid Event - Bad UUID
+POST http://localhost:3000/v1/events
+Content-Type: application/json
+
+{
+  "type": "logging.event",
+  "priority": "NORMAL",
+  "metadata": {
+    "eventId": "not-a-valid-uuid",
+    "timestamp": "2025-11-15T21:00:00.000Z",
+    "source": "test-app",
+    "version": "1.0"
+  },
+  "payload": {
+    "level": "ERROR",
+    "message": "This should fail validation"
+  }
+}
+
+### Invalid Event - Missing Required Field
+POST http://localhost:3000/v1/events
+Content-Type: application/json
+
+{
+  "type": "logging.event",
+  "priority": "NORMAL",
+  "metadata": {
+    "eventId": "990e8400-e29b-41d4-a716-446655440004",
+    "timestamp": "2025-11-15T21:00:00.000Z",
+    "source": "test-app",
+    "version": "1.0"
+  },
+  "payload": {
+    "level": "ERROR"
+  }
+}
+
+### Invalid Event - Wrong Enum Value
+POST http://localhost:3000/v1/events
+Content-Type: application/json
+
+{
+  "type": "logging.event",
+  "priority": "INVALID_PRIORITY",
+  "metadata": {
+    "eventId": "aa0e8400-e29b-41d4-a716-446655440005",
+    "timestamp": "2025-11-15T21:00:00.000Z",
+    "source": "test-app",
+    "version": "1.0"
+  },
+  "payload": {
+    "level": "ERROR",
+    "message": "Testing invalid priority"
+  }
+}
+
+### Invalid Event - Empty Array
+POST http://localhost:3000/v1/events
+Content-Type: application/json
+
+{
+  "type": "licensing.create",
+  "priority": "HIGH",
+  "metadata": {
+    "eventId": "bb0e8400-e29b-41d4-a716-446655440006",
+    "timestamp": "2025-11-15T21:00:00.000Z",
+    "source": "admin-dashboard",
+    "version": "1.0"
+  },
+  "payload": {
+    "licenseType": "SOFTWARE_LICENSE",
+    "customerId": "CUST-123",
+    "productCodes": [],
+    "featureCodes": ["FEATURE-1"],
+    "expirationDate": "2026-12-31T23:59:59.000Z",
+    "email": "test@example.com",
+    "xmlPayload": "<license></license>"
+  }
+}

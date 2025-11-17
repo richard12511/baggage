@@ -10,6 +10,7 @@ import {
   isPermanentError,
   getErrorMessage,
 } from "../utils/error-classifier";
+import { metricsService } from "./metrics.service";
 
 class QueueService {
   private connection: ChannelModel | null = null;
@@ -37,19 +38,24 @@ class QueueService {
         console.log("Connecting to baggage queue");
         this.connection = await amqp.connect(this.url);
         console.log("Connected to RabbitMQ");
+        metricsService.rabbitmqConnectionStatus.set(1);
+
         this.channel = await this.connection.createChannel();
         await this.setupQueues();
 
         this.connection.on("error", (err) => {
           console.error("RabbitMQ connection error:", err);
+          metricsService.rabbitmqConnectionStatus.set(0);
         });
 
         this.connection.on("close", () => {
           console.log("RabbitMQ connetion closed");
           this.connection = null;
           this.channel = null;
+          metricsService.rabbitmqConnectionStatus.set(0);
         });
       } catch (error) {
+        metricsService.rabbitmqConnectionStatus.set(0);
         if (isPermanentError(error)) {
           console.error(
             "Permanent error connecting to RabbitMQ:",
@@ -112,6 +118,9 @@ class QueueService {
             "Transient error publishing event, will retry:",
             getErrorMessage(error)
           );
+          metricsService.queuePublishRetriesTotal.inc({
+            event_type: event.type,
+          });
           this.connection = null;
           this.channel = null;
           throw error;
@@ -198,6 +207,7 @@ class QueueService {
 
     this.isConnecting = true;
     try {
+      metricsService.rabbitmqReconnectionsTotal.inc();
       await this.connect();
     } finally {
       this.isConnecting = false;
