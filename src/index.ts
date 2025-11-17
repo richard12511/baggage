@@ -6,6 +6,7 @@ import cors from "cors";
 import eventRoutes from "./routes/events";
 import { queueService } from "./services/queue.service";
 import { consumerService } from "./services/consumer.service";
+import { metricsService } from "./services/metrics.service";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,6 +24,9 @@ app.get("/health", (req: Request, res: Response) => {
   });
 });
 
+app.get("/metrics", (req: Request, res: Response) => {
+  metricsService.getMetrics(req, res);
+});
 app.use("/v1", eventRoutes);
 
 async function startServer() {
