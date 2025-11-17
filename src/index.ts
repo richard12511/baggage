@@ -8,6 +8,7 @@ import { queueService } from "./services/queue.service";
 import { consumerService } from "./services/consumer.service";
 import { metricsService } from "./services/metrics.service";
 import { requestLogger } from "./middleware/logger";
+import { requireApiKey } from "./middleware/auth";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,7 +30,7 @@ app.get("/health", (req: Request, res: Response) => {
 app.get("/metrics", (req: Request, res: Response) => {
   metricsService.getMetrics(req, res);
 });
-app.use("/v1", eventRoutes);
+app.use("/v1", requireApiKey, eventRoutes);
 
 async function startServer() {
   try {

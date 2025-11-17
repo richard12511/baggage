@@ -7,6 +7,48 @@ GET http://localhost:3000/metrics
 ### Valid Normal Priority Log Event
 POST http://localhost:3000/v1/events
 Content-Type: application/json
+Authorization: Bearer baggage-dev-key-12345
+
+{
+  "type": "logging.event",
+  "priority": "NORMAL",
+  "metadata": {
+    "eventId": "550e8400-e29b-41d4-a716-446655440000",
+    "timestamp": "2025-11-15T21:00:00.000Z",
+    "source": "test-app",
+    "version": "1.0"
+  },
+  "payload": {
+    "level": "ERROR",
+    "message": "Test error message",
+    "errorCode": "TEST_ERROR"
+  }
+}
+
+### Missing API KEY
+POST http://localhost:3000/v1/events
+Content-Type: application/json
+
+{
+  "type": "logging.event",
+  "priority": "NORMAL",
+  "metadata": {
+    "eventId": "550e8400-e29b-41d4-a716-446655440000",
+    "timestamp": "2025-11-15T21:00:00.000Z",
+    "source": "test-app",
+    "version": "1.0"
+  },
+  "payload": {
+    "level": "ERROR",
+    "message": "Test error message",
+    "errorCode": "TEST_ERROR"
+  }
+}
+
+### Invalid API KEY
+POST http://localhost:3000/v1/events
+Content-Type: application/json
+Authorization: Bearer baggage-dev-key-12345-invalid
 
 {
   "type": "logging.event",
@@ -27,7 +69,7 @@ Content-Type: application/json
 ### Valid High Priority Log Event
 POST http://localhost:3000/v1/events
 Content-Type: application/json
-
+Authorization: Bearer baggage-dev-key-12345
 {
   "type": "logging.event",
   "priority": "HIGH",
@@ -48,7 +90,7 @@ Content-Type: application/json
 ### Valid License Create Event
 POST http://localhost:3000/v1/events
 Content-Type: application/json
-
+Authorization: Bearer baggage-dev-key-12345
 {
   "type": "licensing.create",
   "priority": "HIGH",
@@ -72,6 +114,7 @@ Content-Type: application/json
 ### Valid Update Identities Event
 POST http://localhost:3000/v1/events
 Content-Type: application/json
+Authorization: Bearer baggage-dev-key-12345
 
 {
   "type": "licensing.updateidentities",
@@ -102,6 +145,7 @@ Content-Type: application/json
 ### Invalid Event - Bad UUID
 POST http://localhost:3000/v1/events
 Content-Type: application/json
+Authorization: Bearer baggage-dev-key-12345
 
 {
   "type": "logging.event",
@@ -121,6 +165,7 @@ Content-Type: application/json
 ### Invalid Event - Missing Required Field
 POST http://localhost:3000/v1/events
 Content-Type: application/json
+Authorization: Bearer baggage-dev-key-12345
 
 {
   "type": "logging.event",
@@ -139,6 +184,7 @@ Content-Type: application/json
 ### Invalid Event - Wrong Enum Value
 POST http://localhost:3000/v1/events
 Content-Type: application/json
+Authorization: Bearer baggage-dev-key-12345
 
 {
   "type": "logging.event",
@@ -158,6 +204,7 @@ Content-Type: application/json
 ### Invalid Event - Empty Array
 POST http://localhost:3000/v1/events
 Content-Type: application/json
+Authorization: Bearer baggage-dev-key-12345
 
 {
   "type": "licensing.create",
