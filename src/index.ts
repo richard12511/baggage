@@ -8,6 +8,7 @@ import { queueService } from "./services/queue.service";
 import { consumerService } from "./services/consumer.service";
 import { metricsService } from "./services/metrics.service";
 import { requestLogger } from "./middleware/logger";
+import { requestIdMiddleware } from "./middleware/requestId";
 import { optionalApiKey, requireApiKey } from "./middleware/auth";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 import { setupProcessErrorHandlers } from "./utils/processErrorHandlers";
@@ -20,7 +21,8 @@ setupProcessErrorHandlers();
 //Middleware
 app.use(helmet()); //Security headers
 app.use(cors());
-app.use(express.json()); //Parse JSON request bodies
+app.use(express.json());
+app.use(requestIdMiddleware);
 app.use(requestLogger);
 
 app.get("/health", (req: Request, res: Response) => {

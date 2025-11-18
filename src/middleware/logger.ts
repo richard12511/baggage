@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { metricsService } from "../services/metrics.service";
+import { RequestWithId } from "./requestId";
 
 export function requestLogger(
   req: Request,
@@ -8,14 +9,14 @@ export function requestLogger(
 ): void {
   const start = Date.now();
   const durationTimer = metricsService.httpRequestDuration.startTimer();
-
-  console.log(`${req.method} ${req.path}`);
+  const requestId = (req as RequestWithId).requestId || "unknown";
+  console.log(`${requestId} -> ${req.method} ${req.path}`);
 
   res.on("finish", () => {
     const duration = Date.now() - start;
     const statusColor = res.statusCode >= 400 ? "🔴" : "🟢";
     console.log(
-      `${statusColor} ${req.method} ${req.path} - ${res.statusCode} ${duration}ms`
+      `${requestId} ${statusColor} ${req.method} ${req.path} - ${res.statusCode} ${duration}ms`
     );
 
     metricsService.httpRequestsTotal.inc({

@@ -9,8 +9,8 @@ import {
   NOT_FOUND_ERROR,
   VALIDATION_ERROR,
 } from "../errors/strConsts";
-import { de } from "zod/v4/locales";
 import { ZodError } from "zod";
+import { RequestWithId } from "./requestId";
 
 interface ErrorResponse {
   success: false;
@@ -20,6 +20,7 @@ interface ErrorResponse {
     details?: any;
     requestId?: string;
     timestamp: string;
+    stack?: string;
     originalError?: Error;
   };
 }
@@ -34,19 +35,20 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ): void {
-  console.error("❌ Error caught by global handler:");
-  console.error(`   Message: ${err.message}`);
-  console.error(`   Stack: ${err.stack}`);
+  const requestId = (req as RequestWithId).requestId || "Unknown";
+  console.error(`${requestId} Error caught by global handler:`);
+  console.error(`${requestId} Message: ${err.message}`);
+  console.error(`${requestId} Stack: ${err.stack}`);
+
+  if (err instanceof AppError && err.originalError) {
+    console.error(`${requestId} Inside Error Handler. Original Error:`);
+    console.error(`${requestId} Message: ${err.originalError.message}`);
+    console.error(`${requestId} Stack: ${err.originalError.stack}`);
+  }
 
   let statusCode = 500;
   let errorCode = INTERNAL_ERROR;
   let details: any = undefined;
-
-  if (err instanceof AppError && err.originalError) {
-    console.error("   Inside Error Handler. Original Error:");
-    console.error(`     Message: ${err.originalError.message}`);
-    console.error(`     Stack: ${err.originalError.stack}`);
-  }
 
   if (isOperational(err)) {
     statusCode = err.statusCode;
@@ -64,16 +66,17 @@ export function errorHandler(
     details = "Request body contains invalid json";
   }
 
-  metricsService.httpRequestsTotal.inc({
-    method: req.method,
-    path: req.path,
-    status: statusCode.toString(),
-  });
+  // metricsService.httpRequestsTotal.inc({
+  //   method: req.method,
+  //   path: req.path,
+  //   status: statusCode.toString(),
+  // });
 
   const errorResponse: ErrorResponse = {
     success: false,
     error: {
       code: errorCode,
+      requestId: requestId,
       message: err.message || "An unexpected error occurred",
       timestamp: new Date().toISOString(),
     },
@@ -88,7 +91,7 @@ export function errorHandler(
   }
 
   if (process.env.NODE_ENV === "development") {
-    (errorResponse.error as any).stack = err.stack;
+    errorResponse.error.stack = err.stack;
   }
 
   res.status(statusCode).json(errorResponse);
@@ -99,10 +102,13 @@ export function notFoundHandler(
   res: Response,
   next: NextFunction
 ): void {
+  const requestId = (req as RequestWithId).requestId || "Unknown";
+
   const error: ErrorResponse = {
     success: false,
     error: {
       code: NOT_FOUND_ERROR,
+      requestId: requestId,
       message: `Route ${req.method} ${req.path} not found`,
       timestamp: new Date().toISOString(),
     },
