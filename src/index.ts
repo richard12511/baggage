@@ -10,9 +10,12 @@ import { metricsService } from "./services/metrics.service";
 import { requestLogger } from "./middleware/logger";
 import { optionalApiKey, requireApiKey } from "./middleware/auth";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
+import { setupProcessErrorHandlers } from "./utils/processErrorHandlers";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+setupProcessErrorHandlers();
 
 //Middleware
 app.use(helmet()); //Security headers
