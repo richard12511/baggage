@@ -2,22 +2,14 @@ import e, { Router, Request, Response } from "express";
 import { validateEvent } from "../utils/validators";
 import { Event, PushEventResponse, ErrorResponse } from "../schemas/events";
 import { queueService } from "../services/queue.service";
-import { error } from "console";
 import { metricsService } from "../services/metrics.service";
+import { RequestWithId } from "../middleware/requestId";
 
 const router = Router();
 
-/**
- * POST /v1/events
- *
- * Accepts an event, validates it, and queues it for processing.
- *
- * Request body: Event (LogEvent | LicenseCreateEvent | UpdateIdentitiesEvent)
- *
- * Success response: { success: true, eventId: string, message: string }
- * Error response: { success: false, error: { code: string, message: string, ... } }
- */
 router.post("/events", async (req: Request, res: Response) => {
+  const requestId = (req as RequestWithId).requestId || "Unknown";
+
   try {
     const validationResult = validateEvent(req.body);
     if (!validationResult.valid) {
@@ -39,6 +31,7 @@ router.post("/events", async (req: Request, res: Response) => {
     const publishTimer = metricsService.queuePublishDuration.startTimer();
 
     try {
+      console.log(`${requestId} Publishing event ${event.metadata.eventId}`);
       await queueService.publishEvent(event);
 
       metricsService.queuePublishTotal.inc({
@@ -54,14 +47,19 @@ router.post("/events", async (req: Request, res: Response) => {
         event_type: event.type,
         priority: event.priority,
       });
+
       publishTimer({ event_type: event.type, priority: event.priority });
 
-      console.error("Failed to publish event after retries:", publishError);
+      console.error(
+        `${requestId} Failed to publish event after retries:`,
+        publishError
+      );
       const errorResponse: ErrorResponse = {
         success: false,
         error: {
           code: "QUEUE_UNAVAILABLE",
           message: "Unable to queue event. Please try again later.",
+          requestId: requestId,
           details:
             publishError instanceof Error
               ? publishError.message
@@ -75,12 +73,13 @@ router.post("/events", async (req: Request, res: Response) => {
     const successResponse: PushEventResponse = {
       success: true,
       eventId: event.metadata.eventId,
+      requestId: requestId,
       message: "Event accepted and queued for processing",
     };
 
     return res.status(202).json(successResponse);
   } catch (error) {
-    console.error("Error processing event: ", error);
+    console.error(`${requestId} Error processing event:`, error);
 
     const errorResponse: ErrorResponse = {
       success: false,

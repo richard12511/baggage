@@ -137,6 +137,7 @@ export const PushEventResponseSchema = z.object({
   success: z.literal(true),
   eventId: z.string().uuid(),
   message: z.string(),
+  requestId: z.string().optional,
 });
 export type PushEventResponse = z.infer<typeof PushEventResponseSchema>;
 
@@ -145,6 +146,7 @@ export const ErrorResponseSchema = z.object({
   error: z.object({
     code: z.string(),
     message: z.string(),
+    requestId: z.string().optional(),
     field: z.string().optional(),
     details: z.any().optional(),
   }),
