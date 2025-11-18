@@ -9,6 +9,7 @@ import { consumerService } from "./services/consumer.service";
 import { metricsService } from "./services/metrics.service";
 import { requestLogger } from "./middleware/logger";
 import { optionalApiKey, requireApiKey } from "./middleware/auth";
+import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -27,9 +28,18 @@ app.get("/health", (req: Request, res: Response) => {
   });
 });
 
+app.get("/test-error", async (req, res) => {
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  throw new Error("Test async error");
+});
+
 app.get("/metrics", optionalApiKey, (req: Request, res: Response) => {
   metricsService.getMetrics(req, res);
 });
+
+app.use("/v1", requireApiKey, eventRoutes);
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 async function startServer() {
   try {
