@@ -30,7 +30,6 @@ app.get("/health", (req: Request, res: Response) => {
 app.get("/metrics", optionalApiKey, (req: Request, res: Response) => {
   metricsService.getMetrics(req, res);
 });
-app.use("/v1", requireApiKey, eventRoutes);
 
 async function startServer() {
   try {
