@@ -20,6 +20,7 @@ interface ErrorResponse {
     details?: any;
     requestId?: string;
     timestamp: string;
+    originalError?: Error;
   };
 }
 
@@ -40,6 +41,12 @@ export function errorHandler(
   let statusCode = 500;
   let errorCode = INTERNAL_ERROR;
   let details: any = undefined;
+
+  if (err instanceof AppError && err.originalError) {
+    console.error("   Inside Error Handler. Original Error:");
+    console.error(`     Message: ${err.originalError.message}`);
+    console.error(`     Stack: ${err.originalError.stack}`);
+  }
 
   if (isOperational(err)) {
     statusCode = err.statusCode;
@@ -74,6 +81,10 @@ export function errorHandler(
 
   if (details !== undefined) {
     errorResponse.error.details = details;
+  }
+
+  if (err instanceof AppError && err.originalError) {
+    errorResponse.error.originalError = err.originalError;
   }
 
   if (process.env.NODE_ENV === "development") {

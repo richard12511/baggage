@@ -5,13 +5,15 @@ export class AppError extends Error {
   public readonly code: string;
   public readonly isOperational: boolean;
   public readonly details?: any;
+  public readonly originalError?: Error;
 
   constructor(
     message: string,
     statusCode: number,
     code: string,
     isOperational = true,
-    details?: any
+    details?: any,
+    originalError?: any
   ) {
     super(message);
 
@@ -19,6 +21,7 @@ export class AppError extends Error {
     this.code = code;
     this.isOperational = isOperational;
     this.details = details;
+    this.originalError = originalError;
 
     Error.captureStackTrace(this, this.constructor);
 
